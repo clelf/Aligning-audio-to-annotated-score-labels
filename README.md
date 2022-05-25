@@ -45,15 +45,13 @@ For labels visualization purposes, only the `compact` mode is needed when runnin
 
 3. Identify columns and their heading category: *time* for `start` and *label* for `Label`. Make sure to check "First row contains column headings".
 
-   <img src="C:\Users\cleme\AppData\Roaming\Typora\typora-user-images\image-20220525173432340.png" alt="image-20220525173432340" style="zoom: 67%;" />
-
-   
+   ![images/tutorial_1.png)
 
 4. You can change display settings in the *Property Boxes* of the right pane with `View/Show Property Boxes` (`X`). For example, select *Segmentation* for *Plot Type* of the annotation layer.
 
 5. Open the score in *Musescore*. Opening both *SonicVisualiser* and *Musescore* side by side, you can follow the temporal alignment of labels on the audio and the score at the same time.
 
-   ![image-20220525174714636](C:\Users\cleme\AppData\Roaming\Typora\typora-user-images\image-20220525174714636.png)
+   ![images/tutorial_2.png)
 
    
 
