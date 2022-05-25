@@ -2,7 +2,15 @@
 
 ## Intro
 
-This repository proposes a pipeline to perform the alignment between an audio recording of a piece present in DCML Mozart sonatas corpus [1], using Sync Toolbox dynamic time warping (DTW) tools [2]. 
+This repository proposes a pipeline to perform the alignment between an audio recording of a piece present in DCML Mozart sonatas corpus [1], using Sync Toolbox dynamic time warping (DTW) tools [2].
+
+## Content
+
+- **aligner.py**: script to perform alignment with the command line interface described below
+- **utils.py**: module containing the alignment functionalities
+- **examples**:
+  - notes and labels TSV files from the piece K309, movement 2, downloaded from DCML Mozart sonatas corpus [1]. You can reproduce the alignment with them by providing a version you own of an audio recording of K309-2 to the command line interface.
+  - example of a CSV result output
 
 ## Prerequisites
 ### Installation requirements
@@ -11,7 +19,7 @@ This repository proposes a pipeline to perform the alignment between an audio re
 
 First, download the corpus via https://github.com/DCMLab/mozart_piano_sonatas.
 
-Second, navigate to the top level of the mozart_piano_sonatas repository and generate the notes and labels files
+Second, navigate to the top level of the *mozart_piano_sonatas* repository and generate the notes and labels files
 needed for audio-to-annotation alignment by running:
 
 `python ms3 extract -N [folder_to_write_notes_file_to] -X [folder_to_write_labels_file_to] -q`
@@ -53,7 +61,7 @@ For labels visualization purposes, only the `compact` mode is needed when runnin
 
    
 
-#### Visualize notes (score-following-like mode) [to be added]
+#### Visualize notes (score following-like mode) [to be added]
 
 
 
