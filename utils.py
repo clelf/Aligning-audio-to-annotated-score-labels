@@ -37,57 +37,6 @@ feature_rate = 50
 step_weights = np.array([1.5, 1.5, 2.0])
 threshold_rec = 10 ** 6
 
-############################# DECORATORS #############################
-from functools import wraps
-import csv
-import time
-import cProfile, pstats
-
-def time_this(func):
-    """Time measurer decorator"""
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        start = time.perf_counter()
-        res = func(*args, **kwargs)
-        end = time.perf_counter()
-        print(f'{func.__module__}.{func.__name__} : {end - start}')
-        output_file_name = os.path.join(func.__name__+'_time.csv')
-        with open(output_file_name, 'a') as csvfile: # 'a' if decorated function called successively i.e. as comparison, 'w' if unique call
-            fieldnames = ['Module.Function', 'Time']
-            writer = csv.DictWriter(csvfile, delimiter=",", fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerow({'Module.Function':f'{func.__module__}.{func.__name__}' , 'Time':end-start})
-
-        return res
-    return wrapper
-
-def profile_this(func, output_file=None, sort_by='cumulative', lines_to_print=None, strip_dirs=False):
-    """A time profiler decorator. """
-    
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        _output_file = output_file or os.path.join(func.__name__ + '_pr' + '.csv')
-        pr = cProfile.Profile()
-        pr.enable()
-        retval = func(*args, **kwargs)
-        pr.disable()
-        pr.dump_stats(_output_file)
-        
-        with open(_output_file, 'w') as f:
-            ps = pstats.Stats(pr, stream=f)
-            if strip_dirs:
-                ps.strip_dirs()
-            if isinstance(sort_by, (tuple, list)):
-                ps.sort_stats(*sort_by)
-            else:
-                ps.sort_stats(sort_by)
-            ps.print_stats(lines_to_print)
-        return retval
-
-    return wrapper
-
-
 
 ############################# UTILS #############################
 
@@ -120,6 +69,7 @@ def corpus_to_df_musical_time(notes_path):
                 Note: 'start', 'duration', 'pitch' derive from the original file,
                     'velocity' and 'instrument' are artificially infered
     """
+    
     # Load TSV into dataframe
     notes_df = ms3.load_tsv(notes_path) 
     
@@ -159,9 +109,9 @@ def align_corpus_notes_and_labels(notes_path, labels_path):
             
     Returns:
         notes_extended: DataFrame object
-            DataFrame containing notes and labels information, aligned on notes index
-            
+            DataFrame containing notes and labels information, aligned on notes index     
     """
+    
     notes_qb = ms3.load_tsv(notes_path)
     labels_qb = ms3.load_tsv(labels_path)
     
@@ -175,7 +125,7 @@ def align_corpus_notes_and_labels(notes_path, labels_path):
 def align_warped_notes_labels(df_annotation_warped, notes_labels_extended, mode='compact'):
     """
     After warping path is computed and synchronization of notes dataframe with audio is performed,
-    align the labels based using notes index as a key. 
+    align the labels using notes index as a key. 
         Note: Labels must have been aligned with notes beforehand.
     
     Parameters:
@@ -259,7 +209,6 @@ def get_features_from_audio(audio, tuning_offset, Fs, feature_rate, visualize=Fa
         Quantized chroma representation
     f_DLNCO : np.array
         Decaying locally adaptive normalized chroma onset (DLNCO) features
-    
     """
     
     f_pitch = audio_to_pitch_features(f_audio=audio, Fs=Fs, tuning_offset=tuning_offset, feature_rate=feature_rate, verbose=visualize)
@@ -271,6 +220,7 @@ def get_features_from_audio(audio, tuning_offset, Fs, feature_rate, visualize=Fa
 
     f_pitch_onset = audio_to_pitch_onset_features(f_audio=audio, Fs=Fs, tuning_offset=tuning_offset, verbose=visualize)
     f_DLNCO = pitch_onset_features_to_DLNCO(f_peaks=f_pitch_onset, feature_rate=feature_rate, feature_sequence_length=f_chroma_quantized.shape[1], visualize=visualize)
+    
     return f_chroma_quantized, f_DLNCO
 
 
@@ -293,7 +243,6 @@ def get_features_from_annotation(df_annotation, feature_rate, visualize=False):
         Quantized chroma representation
     f_DLNCO : np.array
         Decaying locally adaptive normalized chroma onset (DLNCO) features
-    
     """
        
     f_pitch = df_to_pitch_features(df_annotation, feature_rate=feature_rate)
@@ -327,18 +276,21 @@ def warp_annotations(df_annotation, warping_path, feature_rate):
     Returns:
         Notes annotations warped with corresponding timestamps
     """
+    
     df_annotation_warped = df_annotation.copy(deep=True)
     df_annotation_warped["end"] = df_annotation_warped["start"] + df_annotation_warped["duration"]
     df_annotation_warped[['start', 'end']] = scipy.interpolate.interp1d(warping_path[1] / feature_rate, 
                                warping_path[0] / feature_rate, kind='linear', fill_value="extrapolate")(df_annotation[['start', 'end']])
     df_annotation_warped["duration"] = df_annotation_warped["end"] - df_annotation_warped["start"]
+    
     return df_annotation_warped
 
 
 
 
 def evaluate_matching(df_original_notes, df_warped_notes, verbose=True):
-    """ Evaluates matching of original corpus notes list with warped notes.
+    """ 
+    Evaluates matching of original corpus notes list with warped notes.
     If DTW runs correctly, all notes should have been matched.
     
     Further evaluation can be performed if groundtruth annotations of the audio are known,
@@ -352,6 +304,7 @@ def evaluate_matching(df_original_notes, df_warped_notes, verbose=True):
     Returns:
         Matching score, i.e. percentage of original notes that have found a match
     """
+    
     global_align = pw2.align.globalxx(list(df_original_notes.pitch.apply(str)),
                                       list(df_warped_notes.pitch.apply(str)), gap_char = ['-'])
     matching_score = global_align[0][2]/len(df_original_notes)
@@ -367,7 +320,8 @@ def evaluate_matching(df_original_notes, df_warped_notes, verbose=True):
 def align_notes_labels_audio(notes_path, labels_path, audio_path,
                              store=True, store_path=os.path.join(os.getcwd(), 'alignment_results', 'result.csv'),
                              verbose=False, visualize=False, evaluate=False, mode='compact'):
-    """This function performs the whole pipeline of aligning an audio recording of a piece and its
+    """
+    This function performs the whole pipeline of aligning an audio recording of a piece and its
     corresponding labels annotations from DCML's Mozart sonatas corpus [1], using synctoolbox dynamic
     time warping (DTW) tools [2]. It takes as input the paths to the audio file, to the labels TSV file
     and the notes TSV file as well, for DTW to align single notes events specifically. It returns a
