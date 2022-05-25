@@ -37,7 +37,7 @@ Once the files locations are all identified, you can run:
 This default command line will store a CSV file with minimal information i.e. labels and corresponding timestamps,
 useful to visualize (e.g. with *SonicVisualiser*).
 
-[to add: detail `mode`]
+[options to be detailed]
 
 ### Playground notebook [to add later]
 
