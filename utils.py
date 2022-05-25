@@ -237,11 +237,35 @@ def align_warped_notes_labels(df_annotation_warped, notes_labels_extended, mode=
 
 
 def get_features_from_audio(audio, tuning_offset, Fs, feature_rate, visualize=False):
-    """ From synctoolbox tutorial [add ref]"""
+    """ 
+    Adapted from synctoolbox [2] tutorial: `sync_audio_score_full.ipynb`
+    
+    Takes as input the audio file and computes quantized chroma and DLNCO features.
+    
+    Parameters:
+        audio: str
+            Path to file in .wav format
+        tuning_offset: int
+            Tuning offset used to shift the filterbank (in cents)
+        Fs: float
+            Sampling rate of f_audio (in Hz)
+        feature_rate: int
+            Features per second
+        visualize: bool (optional)
+            Whether to visualize chromagram of audio quantized chroma features. Defaults to False.
+            
+    Returns:
+    f_chroma_quantized: np.ndarray
+        Quantized chroma representation
+    f_DLNCO : np.array
+        Decaying locally adaptive normalized chroma onset (DLNCO) features
+    
+    """
     
     f_pitch = audio_to_pitch_features(f_audio=audio, Fs=Fs, tuning_offset=tuning_offset, feature_rate=feature_rate, verbose=visualize)
     f_chroma = pitch_to_chroma(f_pitch=f_pitch)
     f_chroma_quantized = quantize_chroma(f_chroma=f_chroma)
+    
     if visualize:
         plot_chromagram(f_chroma_quantized, title='Quantized chroma features - Audio', Fs=feature_rate, figsize=(9,3))
 
@@ -251,11 +275,31 @@ def get_features_from_audio(audio, tuning_offset, Fs, feature_rate, visualize=Fa
 
 
 def get_features_from_annotation(df_annotation, feature_rate, visualize=False):
-    """ From synctoolbox tutorial [add ref]"""
+    """ 
+    Adapted from synctoolbox [2] tutorial: `sync_audio_score_full.ipynb`
     
+    Takes as input symbolic annotations dataframe and computes quantized chroma and DLNCO features.
+    
+    Parameters:
+        df_annotation: DataFrame object
+            Dataframe of notes annotations containing ['start', 'duration', 'pitch', 'velocity', 'instrument']        
+        feature_rate: int
+            Features per second
+        visualize: bool (optional)
+            Whether to visualize chromagram of audio quantized chroma features. Defaults to False.
+            
+    Returns:
+    f_chroma_quantized: np.ndarray
+        Quantized chroma representation
+    f_DLNCO : np.array
+        Decaying locally adaptive normalized chroma onset (DLNCO) features
+    
+    """
+       
     f_pitch = df_to_pitch_features(df_annotation, feature_rate=feature_rate)
     f_chroma = pitch_to_chroma(f_pitch=f_pitch)
     f_chroma_quantized = quantize_chroma(f_chroma=f_chroma)
+    
     if visualize:
         plot_chromagram(f_chroma_quantized, title='Quantized chroma features - Annotation', Fs=feature_rate, figsize=(9, 3))
     f_pitch_onset = df_to_pitch_onset_features(df_annotation)
@@ -267,15 +311,21 @@ def get_features_from_annotation(df_annotation, feature_rate, visualize=False):
     return f_chroma_quantized, f_DLNCO
 
 def warp_annotations(df_annotation, warping_path, feature_rate):
-    """_summary_
+    """ 
+    Adapted from synctoolbox [2] tutorial: `sync_audio_score_full.ipynb`
+    
+    Warp timestamps to annotations after having computed the warping path between audio and annotations.
 
     Parameters:
-        df_annotation (_type_): _description_
-        warping_path (_type_): _description_
-        feature_rate (_type_): _description_
+        df_annotation: DataFrame object
+            Dataframe of notes annotations containing ['start', 'duration', 'pitch', 'velocity', 'instrument']    
+        warping_path: np.ndarray(2:)
+            Warping path
+        feature_rate: int
+            Features per second
 
     Returns:
-        _type_: _description_
+        Notes annotations warped with corresponding timestamps
     """
     df_annotation_warped = df_annotation.copy(deep=True)
     df_annotation_warped["end"] = df_annotation_warped["start"] + df_annotation_warped["duration"]
@@ -371,9 +421,6 @@ def align_notes_labels_audio(notes_path, labels_path, audio_path,
         Sync Toolbox: A Python Package for Efficient, Robust, and Accurate Music Synchronization. 
         Journal of Open Source Software (JOSS), 6(64), 2021.
         [https://github.com/meinardmueller/synctoolbox]
-        
-    
-    
     
     """
     
