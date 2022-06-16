@@ -27,7 +27,7 @@ from synctoolbox.feature.utils import estimate_tuning
 import ms3
 import libfmp.c2
 import os
-from Bio import pairwise2 as pw2
+
 
 
 ############################# GLOBALS #############################
@@ -36,6 +36,7 @@ Fs = 22050
 feature_rate = 50
 step_weights = np.array([1.5, 1.5, 2.0])
 threshold_rec = 10 ** 6
+
 
 
 ############################# UTILS #############################
@@ -69,7 +70,6 @@ def corpus_to_df_musical_time(notes_path):
                 Note: 'start', 'duration', 'pitch' derive from the original file,
                     'velocity' and 'instrument' are artificially infered
     """
-    
     # Load TSV into dataframe
     notes_df = ms3.load_tsv(notes_path) 
     
@@ -109,9 +109,9 @@ def align_corpus_notes_and_labels(notes_path, labels_path):
             
     Returns:
         notes_extended: DataFrame object
-            DataFrame containing notes and labels information, aligned on notes index     
+            DataFrame containing notes and labels information, aligned on notes index
+            
     """
-    
     notes_qb = ms3.load_tsv(notes_path)
     labels_qb = ms3.load_tsv(labels_path)
     
@@ -125,7 +125,7 @@ def align_corpus_notes_and_labels(notes_path, labels_path):
 def align_warped_notes_labels(df_annotation_warped, notes_labels_extended, mode='compact'):
     """
     After warping path is computed and synchronization of notes dataframe with audio is performed,
-    align the labels using notes index as a key. 
+    align the labels based using notes index as a key. 
         Note: Labels must have been aligned with notes beforehand.
     
     Parameters:
@@ -135,11 +135,10 @@ def align_warped_notes_labels(df_annotation_warped, notes_labels_extended, mode=
             Dataframe containing corpus information
         mode: str (optional)
             Level of details the result should keep.
-            Can take value between: ['compact', 'labels', 'extended', 'scofo']
+            Can take value between: ['compact', 'labels', 'extended']
                 Compact: only outputs labels aligned with timestamps
                 Labels details: outputs labels and additional label information aligned with timestamps
                 Extended: outputs merged notes and labels datasets with additional information, aligned with timestamps
-                Sco-fo: outputs notes and additional note information aligned with timestamps [not implemented at the moment]
             Defaults to 'compact'.
 
     Returns:
@@ -183,6 +182,8 @@ def align_warped_notes_labels(df_annotation_warped, notes_labels_extended, mode=
     else:
         raise ValueError("'mode' parameter should take either 'compact', 'labels' or 'extended' value")
     
+    aligned_timestamps_labels = aligned_timestamps_labels.rename(columns={'start':'timestamp'})
+    
     return aligned_timestamps_labels
 
 
@@ -209,6 +210,7 @@ def get_features_from_audio(audio, tuning_offset, Fs, feature_rate, visualize=Fa
         Quantized chroma representation
     f_DLNCO : np.array
         Decaying locally adaptive normalized chroma onset (DLNCO) features
+    
     """
     
     f_pitch = audio_to_pitch_features(f_audio=audio, Fs=Fs, tuning_offset=tuning_offset, feature_rate=feature_rate, verbose=visualize)
@@ -220,13 +222,11 @@ def get_features_from_audio(audio, tuning_offset, Fs, feature_rate, visualize=Fa
 
     f_pitch_onset = audio_to_pitch_onset_features(f_audio=audio, Fs=Fs, tuning_offset=tuning_offset, verbose=visualize)
     f_DLNCO = pitch_onset_features_to_DLNCO(f_peaks=f_pitch_onset, feature_rate=feature_rate, feature_sequence_length=f_chroma_quantized.shape[1], visualize=visualize)
-    
     return f_chroma_quantized, f_DLNCO
 
 
 def get_features_from_annotation(df_annotation, feature_rate, visualize=False):
-    """ 
-    Adapted from synctoolbox [2] tutorial: `sync_audio_score_full.ipynb`
+    """ Adapted from synctoolbox [2] tutorial: `sync_audio_score_full.ipynb`
     
     Takes as input symbolic annotations dataframe and computes quantized chroma and DLNCO features.
     
@@ -243,6 +243,7 @@ def get_features_from_annotation(df_annotation, feature_rate, visualize=False):
         Quantized chroma representation
     f_DLNCO : np.array
         Decaying locally adaptive normalized chroma onset (DLNCO) features
+    
     """
        
     f_pitch = df_to_pitch_features(df_annotation, feature_rate=feature_rate)
@@ -260,8 +261,7 @@ def get_features_from_annotation(df_annotation, feature_rate, visualize=False):
     return f_chroma_quantized, f_DLNCO
 
 def warp_annotations(df_annotation, warping_path, feature_rate):
-    """ 
-    Adapted from synctoolbox [2] tutorial: `sync_audio_score_full.ipynb`
+    """ Adapted from synctoolbox [2] tutorial: `sync_audio_score_full.ipynb`
     
     Warp timestamps to annotations after having computed the warping path between audio and annotations.
 
@@ -276,13 +276,11 @@ def warp_annotations(df_annotation, warping_path, feature_rate):
     Returns:
         Notes annotations warped with corresponding timestamps
     """
-    
     df_annotation_warped = df_annotation.copy(deep=True)
     df_annotation_warped["end"] = df_annotation_warped["start"] + df_annotation_warped["duration"]
     df_annotation_warped[['start', 'end']] = scipy.interpolate.interp1d(warping_path[1] / feature_rate, 
                                warping_path[0] / feature_rate, kind='linear', fill_value="extrapolate")(df_annotation[['start', 'end']])
     df_annotation_warped["duration"] = df_annotation_warped["end"] - df_annotation_warped["start"]
-    
     return df_annotation_warped
 
 
@@ -293,7 +291,7 @@ def evaluate_matching(df_original_notes, df_warped_notes, verbose=True):
     Evaluates matching of original corpus notes list with warped notes.
     If DTW runs correctly, all notes should have been matched.
     
-    Further evaluation can be performed if groundtruth annotations of the audio are known,
+    Global evaluation can be performed if groundtruth annotations of the audio are known,
     with synctoolbox function `evaluate_synchronized_positions`.
     
     Parameters:
@@ -303,25 +301,31 @@ def evaluate_matching(df_original_notes, df_warped_notes, verbose=True):
 
     Returns:
         Matching score, i.e. percentage of original notes that have found a match
-    """
+        
+    Note: 
+        Using Bio library is a powerful tool to find sequences alignment. The function
+        so far only returns the matching score, that could be easily calculated as:
+        >> len(df_warped_notes)/len(df_original_notes)
+        assuming every warped note corresponds to an original event. Using the Bio
+        library accounts for cases where warped notes show events with no correspondances
+        in the original events list.
     
-    global_align = pw2.align.globalxx(list(df_original_notes.pitch.apply(str)),
-                                      list(df_warped_notes.pitch.apply(str)), gap_char = ['-'])
-    matching_score = global_align[0][2]/len(df_original_notes)
+        
+    """
+    diff_matched_notes = len(df_original_notes) - len(df_warped_notes)
+    matching_score = len(df_warped_notes)/len(df_original_notes)
     if verbose:
         print("Matching percentage: {:.4}%".format(matching_score*100))
-        print("Number of unmachted notes: {:}".format(len(df_original_notes)-global_align[0][2]))
+        print("Number of unmachted notes: {:}".format(diff_matched_notes))
 
     return matching_score
-
-
+    
 
 
 def align_notes_labels_audio(notes_path, labels_path, audio_path,
                              store=True, store_path=os.path.join(os.getcwd(), 'alignment_results', 'result.csv'),
                              verbose=False, visualize=False, evaluate=False, mode='compact'):
-    """
-    This function performs the whole pipeline of aligning an audio recording of a piece and its
+    """This function performs the whole pipeline of aligning an audio recording of a piece and its
     corresponding labels annotations from DCML's Mozart sonatas corpus [1], using synctoolbox dynamic
     time warping (DTW) tools [2]. It takes as input the paths to the audio file, to the labels TSV file
     and the notes TSV file as well, for DTW to align single notes events specifically. It returns a
@@ -386,8 +390,7 @@ def align_notes_labels_audio(notes_path, labels_path, audio_path,
     # Load audio
     audio, _ = librosa.load(audio_path, Fs)
 
-    # Estimate tuning
-    # Alternative: librosa.estimate_tuning
+    # Estimate tuning deviation
     tuning_offset = estimate_tuning(audio, Fs)
     if verbose:
         print('Estimated tuning deviation for recording: %d cents' % (tuning_offset))
@@ -431,7 +434,17 @@ def align_notes_labels_audio(notes_path, labels_path, audio_path,
         _ = evaluate_matching(df_annotation, df_annotation_warped, verbose=True)
     
     # Align time-aligned annotations of notes with labels
-    result = align_warped_notes_labels(df_annotation_warped, df_annotation_extended, mode)
+    result = df_annotation_warped
+    if mode in ['compact', 'labels', 'extended']:
+        result = align_warped_notes_labels(df_annotation_warped, df_annotation_extended, mode)
+    elif mode == 'notes':
+        result == result[['start', 'end', 'pitch']]
+    elif mode == 'scofo':
+        # Return notes and their temporal positions, and additional information from the notes dataset
+        notes_df = ms3.load_tsv(notes_path) 
+        result = pd.merge(df_annotation_warped[['start', 'end', 'pitch']], notes_df,
+                 left_on='pitch' , right_on='midi').drop('midi', axis=1)
+
     
     # Store
     if store:

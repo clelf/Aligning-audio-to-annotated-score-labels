@@ -17,9 +17,9 @@ This repository proposes a pipeline to perform the alignment between an audio re
 
 ### Dataset preparation
 
-First, download the corpus via https://github.com/DCMLab/mozart_piano_sonatas.
+First, download the [Annotated Mozart Sonatas corpus](https://github.com/DCMLab/mozart_piano_sonatas/tree/update) (from the *update* branch).
 
-Second, navigate to the top level of the *mozart_piano_sonatas* repository and generate the notes and labels files
+Second, install the [`ms3` parser](https://github.com/johentsch/ms3), navigate to the top level of the *mozart_piano_sonatas* repository and generate the notes and labels files
 needed for audio-to-annotation alignment by running:
 
 `python ms3 extract -N [folder_to_write_notes_file_to] -X [folder_to_write_labels_file_to] -q`
@@ -39,7 +39,10 @@ useful to visualize (e.g. with *SonicVisualiser*).
 
 [options to be detailed]
 
-### Playground notebook [to add later]
+### Playground notebook
+
+A notebook is provided to give a detailed understanding of the aligning pipeline. It allows one to see the behaviour of the pipeline's steps independently, visualize some steps, and shows how the pipeline could be adapted to data outside the *Annotated Mozart Sonatas* dataset.
+
 
 ### Results visualization
 
@@ -75,6 +78,7 @@ For labels visualization purposes, only the `compact` mode is needed when runnin
   - Solution:
     - Test for repeating pieces (should not give conclusive results, if not raising errors)
     - Investigate DTW improvements as proposed in *Automatic Alignment of Music Performances with Structural Differences* [3]
+- Provide function to compute a similar running index as the AMS's `quarterbeats` (and corresp. `duration_qb`), for data that would only contain bar and beat within a bar positions and time signature
 
 
 
