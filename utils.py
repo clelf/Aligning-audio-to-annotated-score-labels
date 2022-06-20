@@ -332,8 +332,8 @@ def align_notes_labels_audio(notes_path, labels_path, audio_path,
     dataframe containing labels and their corresponding timestamps within the audio.
     
     Depending on the `mode` passed, the result can contain the minimal information (labels and timestamps)
-    that are useful for live visualization (e.g. with SonicVisualiser) or more detailed information about labels
-    (and possibly notes) as in the original TSV files.
+    that are useful for live visualization (e.g. with SonicVisualiser) or more detailed information about 
+    labels (and possibly notes) as in the original TSV files.
 
     Parameters:
         notes_path: str
