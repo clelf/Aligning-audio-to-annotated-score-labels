@@ -13,7 +13,19 @@ This repository proposes a pipeline to perform the alignment between an audio re
   - example of a CSV result output
 
 ## Prerequisites
-### Installation requirements
+### Package requirements
+
+Currently this repository is running with:
+- python 3.9.7
+- libfmp 1.2.2
+- librosa 0.9.1
+- numpy 1.22.2
+- pandas 1.4.2
+- scipy 1.8.0
+- synctoolbox 1.2.0
+- ms3 0.5.2
+
+Install synctoolbox via the recommended procedure [here](https://github.com/meinardmueller/synctoolbox).
 
 ### Dataset preparation
 

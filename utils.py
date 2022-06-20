@@ -4,11 +4,9 @@
 
 ############################# IMPORTS #############################
 
-import IPython.display as ipd
 from libfmp.b import list_to_pitch_activations, plot_chromagram, plot_signal, plot_matrix, \
                      sonify_pitch_activations_with_signal
 import librosa.display
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.interpolate
