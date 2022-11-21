@@ -1,5 +1,7 @@
 # Aligning audio to annotated score labels from the Annotated Mozart Sonatas dataset
 
+
+
 ## Intro
 
 This repository proposes a pipeline to perform the alignment between an audio recording of a piece present in DCML Mozart sonatas corpus [1], using Sync Toolbox dynamic time warping (DTW) tools [2].
