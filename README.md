@@ -11,7 +11,7 @@ This repository proposes a pipeline to perform the alignment between an audio re
 - **examples**:
   - notes and labels TSV files from the piece K309, movement 2, downloaded from DCML Mozart sonatas corpus [1]. You can reproduce the alignment with them by providing a version you own of an audio recording of K309-2 to the command line interface.
   - example of a CSV result output
-- **playground_notebook.ipynb**: notebook that details the alignment pipeline, gives suggestions on how to adapt it to data outside the Annotated Mozart Sonatas corpus and shows how to evaluate the accruacy of the alignment result.
+- **playground_notebook.ipynb**: notebook that details the alignment pipeline, gives suggestions on how to adapt it to data outside the Annotated Mozart Sonatas corpus and shows how to evaluate the accuracy of the alignment result.
 
 ## Prerequisites
 ### Package requirements
