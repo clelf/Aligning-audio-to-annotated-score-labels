@@ -1,6 +1,6 @@
 # Aligning audio to annotated score labels from the Annotated Mozart Sonatas dataset
 
-   ![viz_video](images/live_viz_K309-2.mp4)
+   ![viz_video](https://github.com/clelf/Aligning-audio-to-annotated-score-labels/blob/main/images/live_viz_K309-2.mp4)
 
 ## Intro
 
