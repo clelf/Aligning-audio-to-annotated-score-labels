@@ -1,7 +1,7 @@
 # Aligning audio to annotated score labels from the Annotated Mozart Sonatas dataset
 
 https://user-images.githubusercontent.com/44549540/203167688-d05adbcc-157a-44eb-aad0-c29ebd6be631.mp4
-
+(higher quality ![here](images/live_viz_K309-2.mp4))
 
 ## Intro
 
