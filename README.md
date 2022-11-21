@@ -8,6 +8,8 @@ https://user-images.githubusercontent.com/44549540/203167688-d05adbcc-157a-44eb-
 
 This repository proposes a pipeline to perform the alignment between an audio recording of a piece present in DCML Mozart sonatas corpus [1], using Sync Toolbox dynamic time warping (DTW) tools [2].
 
+The project was conducted at the Digital and Cognitive Musicology Lab at EPFL led by Prof. Martin Rorhmeier and supervised by Dr. Steffen Herff.
+
 ## Content
 
 - **aligner.py**: script to perform alignment with the command line interface described below
