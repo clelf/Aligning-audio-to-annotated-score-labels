@@ -2,8 +2,10 @@
 
 https://user-images.githubusercontent.com/44549540/203167688-d05adbcc-157a-44eb-aad0-c29ebd6be631.mp4
 
-Video: Live demonstration
+_Video_: Live demonstration
+
 _Top_: score annotations temporally aligned with audio (each vertical span is labeled with an annotation, notice the labels names above the audio profile)
+
 _Bottom_: original score added to follow the music and the annotations precise location during live visualizing
 
 (higher quality to see the labels names more clearly: ![here](images/live_viz_K309-2.mp4))
