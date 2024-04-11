@@ -1,6 +1,7 @@
 # Aligning audio to annotated score labels from the Annotated Mozart Sonatas dataset
 
 https://user-images.githubusercontent.com/44549540/203167688-d05adbcc-157a-44eb-aad0-c29ebd6be631.mp4
+
 Video: Live demonstration
 _Top_: score annotations temporally aligned with audio (each vertical span is labeled with an annotation, notice the labels names above the audio profile)
 _Bottom_: original score added to follow the music and the annotations precise location during live visualizing
