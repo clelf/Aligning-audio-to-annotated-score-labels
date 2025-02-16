@@ -19,3 +19,9 @@ You can import both files into Audacity (for the labels use `File > Import > Lab
 select the second movement, and export the audio to `K309-2_audio.wav` as shown in the following screenshot:
 
 ![Exporting the second movement to WAV in Audacity](audacity_screenshot.png)
+
+# Creating the alignment
+
+In the example directory, run the following command:
+
+    python ../aligner.py -a K309-2_audio.wav -n K309-2.notes.tsv -l K309-2.harmonies.tsv -o K309-2_aligned.csv 

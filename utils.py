@@ -386,7 +386,7 @@ def align_notes_labels_audio(notes_path, labels_path, audio_path,
     df_annotation_extended = align_corpus_notes_and_labels(notes_path, labels_path)
     
     # Load audio
-    audio, _ = librosa.load(audio_path, Fs)
+    audio, _ = librosa.load(audio_path, sr=Fs)
 
     # Estimate tuning deviation
     tuning_offset = estimate_tuning(audio, Fs)
