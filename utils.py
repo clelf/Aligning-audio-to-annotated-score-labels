@@ -317,12 +317,19 @@ def evaluate_matching(df_original_notes, df_warped_notes, verbose=True):
         print("Number of unmachted notes: {:}".format(diff_matched_notes))
 
     return matching_score
-    
 
 
-def align_notes_labels_audio(notes_path, labels_path, audio_path,
-                             store=True, store_path=os.path.join(os.getcwd(), 'alignment_results', 'result.csv'),
-                             verbose=False, visualize=False, evaluate=False, mode='compact'):
+def align_notes_labels_audio(
+        audio_path,
+        notes_path,
+        labels_path=None,
+        store=True,
+        store_path=os.path.join(os.getcwd(), 'alignment_results', 'result.csv'),
+        verbose=False,
+        visualize=False,
+        evaluate=False,
+        mode='compact'
+        ):
     """This function performs the whole pipeline of aligning an audio recording of a piece and its
     corresponding labels annotations from DCML's Mozart sonatas corpus [1], using synctoolbox dynamic
     time warping (DTW) tools [2]. It takes as input the paths to the audio file, to the labels TSV file
@@ -383,7 +390,15 @@ def align_notes_labels_audio(notes_path, labels_path, audio_path,
     # Prepare annotation format
     df_annotation = corpus_to_df_musical_time(notes_path)
     # Keep track of notes annotations and labels correspondances
-    df_annotation_extended = align_corpus_notes_and_labels(notes_path, labels_path)
+    if labels_path:
+        df_annotation_extended = align_corpus_notes_and_labels(notes_path, labels_path)
+    else:
+        if mode == "labels":
+            raise ValueError("When 'mode' is set to 'labels', labels_path must be provided")
+        if mode == "compact":
+            mode = "notes"
+        elif mode == "extended":
+            mode = "scofo"
     
     # Load audio
     audio, _ = librosa.load(audio_path, sr=Fs)
@@ -409,7 +424,7 @@ def align_notes_labels_audio(notes_path, labels_path, audio_path,
 
     # Apply potential shift to audio and annotations features
     f_chroma_quantized_annotation = shift_chroma_vectors(f_chroma_quantized_annotation, opt_chroma_shift)
-    f_DLNCO_annotation = shift_chroma_vectors(f_DLNCO_annotation, opt_chroma_shift)
+    # f_DLNCO_annotation = shift_chroma_vectors(f_DLNCO_annotation, opt_chroma_shift)
     
     # Compute warping path
     wp = sync_via_mrmsdtw(f_chroma1=f_chroma_quantized_audio, 
@@ -436,7 +451,7 @@ def align_notes_labels_audio(notes_path, labels_path, audio_path,
     if mode in ['compact', 'labels', 'extended']:
         result = align_warped_notes_labels(df_annotation_warped, df_annotation_extended, mode)
     elif mode == 'notes':
-        result == result[['start', 'end', 'pitch']]
+        result = result[['start', 'end', 'pitch']]
     elif mode == 'scofo':
         # Return notes and their temporal positions, and additional information from the notes dataset
         notes_df = ms3.load_tsv(notes_path) 
