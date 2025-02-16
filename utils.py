@@ -485,7 +485,8 @@ def align_notes_labels_audio(
     
     # Store
     if store:
-        result.to_csv(store_path, index = False)
+        csv_args = dict(sep="\t") if store_path.endswith(".tsv") else {}
+        result.to_csv(store_path, index = False, **csv_args)
         print(f"\nStored results to", store_path)
     
     return result
