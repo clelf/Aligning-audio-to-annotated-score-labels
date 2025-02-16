@@ -324,7 +324,7 @@ def align_notes_labels_audio(
         notes_path,
         labels_path=None,
         store=True,
-        store_path=os.path.join(os.getcwd(), 'alignment_results', 'result.csv'),
+        store_path=None,
         verbose=False,
         visualize=False,
         evaluate=False,
@@ -386,7 +386,10 @@ def align_notes_labels_audio(
         [https://github.com/meinardmueller/synctoolbox]
     
     """
-    
+    if store_path is None:
+        audio_fname, _ = os.path.splitext(os.path.basename(audio_path))
+        result_fname = audio_fname + '_aligned.csv'
+        store_path = os.path.join(os.getcwd(), result_fname)
     # Prepare annotation format
     df_annotation = corpus_to_df_musical_time(notes_path)
     # Keep track of notes annotations and labels correspondances
