@@ -1,0 +1,4 @@
+0.702629	334.945760	I. Allegro con spirito 
+334.945760	641.355283	II. Andante un poco adagio 
+641.355283	972.682179	III. Rondo. Allegretto grazioso 
+972.682179	992.783673	Applause
