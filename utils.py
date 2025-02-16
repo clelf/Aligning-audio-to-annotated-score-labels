@@ -53,6 +53,16 @@ def to_end(start, duration):
     """
     return start + duration
 
+
+def get_quarterbeats_column_name(notes_df: pd.DataFrame) -> str:
+    if "quarterbeats_playthrough" in notes_df.columns:
+        qb_column = "quarterbeats_playthrough"
+    elif "quarterbeats" in notes_df.columns:
+        qb_column = "quarterbeats"
+    else:
+        raise ValueError("The notes file must contain either 'quarterbeats' or 'quarterbeats_playthrough' column")
+    return qb_column
+
 def corpus_to_df_musical_time(notes_path):
     """
     Converts notes TSV file as in DCML mozart-sonatas corpus [1] to a dataframe used for warping path synchronization
@@ -72,8 +82,9 @@ def corpus_to_df_musical_time(notes_path):
     notes_df = ms3.load_tsv(notes_path) 
     
     # Select and rename columns of interest
-    df_annotation = notes_df[['quarterbeats', 'duration_qb', 'midi']].rename(
-        columns={'quarterbeats':'start', 'duration_qb':'duration', 'midi': 'pitch'})
+    qb_column = get_quarterbeats_column_name(notes_df)
+    df_annotation = notes_df[[qb_column, 'duration_qb', 'midi']].rename(
+        columns={qb_column:'start', 'duration_qb':'duration', 'midi': 'pitch'})
     
     # Create "start" column
     df_annotation['start'] = df_annotation['start'].apply(lambda x: to_start(x))
@@ -112,11 +123,19 @@ def align_corpus_notes_and_labels(notes_path, labels_path):
     """
     notes_qb = ms3.load_tsv(notes_path)
     labels_qb = ms3.load_tsv(labels_path)
-    
+    notes_qb_column = get_quarterbeats_column_name(notes_qb)
+    labels_qb_column = get_quarterbeats_column_name(labels_qb)
+    if notes_qb_column != labels_qb_column:
+        raise ValueError(
+f"""It looks like between notes and labels, one of them is unfolded while the other isn't:
+Notes: {notes_qb_column!r}
+Labels: {labels_qb_column!r}"""
+        )
+
     notes_extended = pd.merge(notes_qb, labels_qb.drop(columns=
                                                         ['duration_qb', 'mc', 'mn', 'mc_onset',
                                                         'mn_onset', 'timesig', 'staff', 'voice']), 
-                                left_on=['quarterbeats'], right_on=['quarterbeats'], how='outer')
+                                left_on=[notes_qb_column], right_on=[notes_qb_column], how='outer')
     
     return notes_extended
 
