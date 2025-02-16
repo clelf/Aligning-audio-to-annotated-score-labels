@@ -478,9 +478,9 @@ def align_notes_labels_audio(
         result = result[['start', 'end', 'pitch']]
     elif mode == 'scofo':
         # Return notes and their temporal positions, and additional information from the notes dataset
-        notes_df = ms3.load_tsv(notes_path) 
-        result = pd.merge(df_annotation_warped[['start', 'end', 'pitch']], notes_df,
-                 left_on='pitch' , right_on='midi').drop('midi', axis=1)
+        notes_df = pd.read_csv(notes_path, sep='\t', dtype="string") # loading as nullable strings to not change any data
+        assert notes_df.midi.equals(df_annotation_warped.pitch.astype("string")), "MIDI values do not match"
+        result = pd.concat([notes_df, df_annotation_warped[['start', 'end']]], axis=1)
 
     
     # Store
