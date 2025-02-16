@@ -352,7 +352,7 @@ def align_notes_labels_audio(
         store: bool (optional)
             Stores the alignment result. Defaults to False.
         store_path: str (optional)
-            If store is set to True, path to store the result in. Defaults to "alignment_results/result.csv".
+            If store is set to True, path to store the result in. Defaults to current working directory.
         verbose: bool (optional)
             Prints information. Defaults to False.
         visualize: bool (optional)
@@ -387,9 +387,11 @@ def align_notes_labels_audio(
     
     """
     if store_path is None:
+        store_path = os.getcwd()
+    if os.path.isdir(store_path):
         audio_fname, _ = os.path.splitext(os.path.basename(audio_path))
         result_fname = audio_fname + '_aligned.csv'
-        store_path = os.path.join(os.getcwd(), result_fname)
+        store_path = os.path.join(store_path, result_fname)
     # Prepare annotation format
     df_annotation = corpus_to_df_musical_time(notes_path)
     # Keep track of notes annotations and labels correspondances
@@ -465,5 +467,6 @@ def align_notes_labels_audio(
     # Store
     if store:
         result.to_csv(store_path, index = False)
+        print(f"\nStored results to", store_path)
     
     return result

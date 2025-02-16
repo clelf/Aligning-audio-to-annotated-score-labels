@@ -48,7 +48,7 @@ def main():
     parser.add_argument('-n', '--notes', help='Path to the notes TSV file', required=True)
     parser.add_argument('-l', '--labels', help='Path to the labels TSV file', required=False)
     #parser.add_argument('-o', '--output', type=check_dir, default=os.path.join(os.getcwd(), 'alignment'), help='Folder for storing the alignment result. Can be relative, defaults to ./alignment')
-    parser.add_argument('-o', '--output', default=os.path.join(os.getcwd(), 'alignment_results', 'result.csv'), help='Folder for storing the alignment result. Can be relative, defaults to ./alignment_results')
+    parser.add_argument('-o', '--output', help='Folder for storing the alignment result. Can be relative, defaults to current working directory.')
     parser.add_argument('-m', '--mode', help="Output format mode, to choose between ['compact', 'labels', 'extended', 'scofo']. default: ", default='compact')
     parser.add_argument('-e', '--evaluate', help="Evaluate warping mode. default: False", action='store_true', default=False)
 
