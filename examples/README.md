@@ -24,4 +24,15 @@ select the second movement, and export the audio to `K309-2_audio.wav` as shown 
 
 In the example directory, run the following command:
 
-    python ../aligner.py -a K309-2_audio.wav -n K309-2.notes.tsv -l K309-2.harmonies.tsv -o K309-2_aligned.csv 
+    python ../aligner.py -a K309-2_audio.wav -n K309-2.notes.tsv -l K309-2.harmonies.tsv -o K309-2_aligned.csv
+
+## Using batch conversion
+
+The file `batch.csv` contains an example for how you can achieve the same thing for several files at once.
+The paths can be absolute paths or, as in this example case, relative -- but you need to be sure that 
+they resolve correctly against your current working directory. In this example, the paths simply consists
+of files in the example folder, so, once again, we need to run the command in the examples folder:
+
+    python ../aligner.py -c batch.csv
+
+The output path in the "name" column, `../result.csv` is again relative and creates the result one level higher.
