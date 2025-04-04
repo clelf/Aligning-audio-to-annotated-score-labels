@@ -2,10 +2,9 @@
 import argparse
 from typing import Optional, Literal
 
+import ms3.cli
+
 from utils import align_notes_labels_audio
-
-
-# from ms3 import check_dir
 
 
 def main(
@@ -70,11 +69,8 @@ def parse_args():
     """
     )
     parser.add_argument('-a', '--audio', help='Path to audiofile', required=True)
-    # parser.add_argument('-p','--piece', help='Name of the desired piece from the Mozart corpus')
     parser.add_argument('-n', '--notes', help='Path to the notes TSV file', required=True)
     parser.add_argument('-l', '--labels', help='Path to the labels TSV file', required=False)
-    # parser.add_argument('-o', '--output', type=check_dir, default=os.path.join(os.getcwd(), 'alignment'),
-    # help='Folder for storing the alignment result. Can be relative, defaults to ./alignment')
     parser.add_argument(
         '-o', '--output',
         help='Folder for storing the alignment result. Can be relative, defaults to current working directory.'
@@ -88,6 +84,8 @@ def parse_args():
         '-e', '--evaluate', help="Evaluate warping mode. default: False", action='store_true', default=False
     )
     args = parser.parse_args()
+    if args.output:
+        args.output = ms3.cli.check_and_create(args.output)
     return args
 
 
