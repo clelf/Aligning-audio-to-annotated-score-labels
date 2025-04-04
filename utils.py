@@ -2,6 +2,7 @@
 
 """ This module contains the main audio-to-annotations functionality and helper functions."""
 import os
+import warnings
 from typing import Optional, Literal
 
 import librosa.display
@@ -158,42 +159,75 @@ def align_warped_notes_labels(df_annotation_warped, notes_labels_extended, mode=
         aligned_timestamps_labels: DataFrame object
             Labels and optional information, aligned with timestamps
     """
-    
+    # the following columns are included on both sides and will be dropped on one
+    duplicate_columns = ['start', 'end', 'mc_playthrough', 'mn_playthrough', 'quarterbeats_all_endings']
+
     if mode == 'compact':
-        aligned_timestamps_labels = pd.merge(df_annotation_warped.drop(columns= ['velocity',
-                                                                                'instrument', 
-                                                                                'duration',
-                                                                                'pitch',
-                                                                                'end']),
-                                            notes_labels_extended[['label']], right_index=True, left_index=True)
-        aligned_timestamps_labels = aligned_timestamps_labels.dropna(subset='label').drop_duplicates(subset = ['start', 'label'])
-        
+        aligned_timestamps_labels = pd.merge(
+            left=df_annotation_warped.drop(
+                columns=[
+                    'velocity',
+                    'instrument',
+                    'duration',
+                    'pitch',
+                    'end'
+                ]
+            ),
+            how="outer",
+            right=notes_labels_extended[['label']],
+            right_index=True,
+            left_index=True
+        )
+        aligned_timestamps_labels = aligned_timestamps_labels.dropna(subset='label').drop_duplicates(
+            subset=['start', 'label']
+        )
+
     elif mode == 'labels':
-        
-        notes_related_columns = ['staff','voice', 'duration', 'nominal_duration', 'scalar',
-                                 'tied','tpc', 'midi', 'chord_id']
-        
-        # Note: additional columns not present in all pieces could be also added and tested here
-        if 'gracenote' in notes_labels_extended:
-            notes_related_columns.append('gracenote')
-    
-        aligned_timestamps_labels = pd.merge(df_annotation_warped.drop(columns=['velocity',
-                                                                                'instrument',
-                                                                                'pitch']).rename(
-            columns={'duration':'duration_time'}),
-                                            notes_labels_extended.drop(columns=notes_related_columns),
-                                            right_index=True, left_index=True)
-        aligned_timestamps_labels = aligned_timestamps_labels.dropna(subset='label').drop_duplicates(subset = ['start', 'label'])
+
+        notes_related_columns = ['staff', 'voice', 'duration', 'nominal_duration', 'scalar', 'gracenote'
+                                                                                             'tied', 'tpc', 'midi',
+                                 'chord_id', ]
+
+        drop_cols = [col for col in notes_related_columns + duplicate_columns if col in notes_labels_extended.columns]
+        aligned_timestamps_labels = pd.merge(
+            left=df_annotation_warped.drop(
+                columns=[
+                    'velocity',
+                    'instrument',
+                    'pitch'
+                ]
+            ).rename(
+                columns={'duration': 'duration_time'}
+            ),
+            right=notes_labels_extended.drop(columns=drop_cols),
+            how="outer",
+            right_index=True,
+            left_index=True
+        )
+        aligned_timestamps_labels = aligned_timestamps_labels.dropna(subset='label').drop_duplicates(
+            subset=['start', 'label']
+        )
 
     elif mode == 'extended':
-        aligned_timestamps_labels = pd.merge(df_annotation_warped.drop(columns=['velocity',
-                                                                                'instrument',
-                                                                                'pitch']).rename(
-            columns={'duration':'duration_time'}),
-                                            notes_labels_extended, right_index=True, left_index=True)
-    
+        drop_cols = [col for col in duplicate_columns if col in notes_labels_extended.columns]
+        aligned_timestamps_labels = pd.merge(
+            left=df_annotation_warped.drop(
+                columns=[
+                    'velocity',
+                    'instrument',
+                    'pitch'
+                ]
+            ).rename(
+                columns={'duration': 'duration_time'}
+            ),
+            right=notes_labels_extended.drop(columns=drop_cols),
+            how="outer",
+            right_index=True,
+            left_index=True
+        )
+
     else:
-        raise ValueError("'mode' parameter should take either 'compact', 'labels' or 'extended' value")
+        raise ValueError(f"'mode' parameter should bei either 'compact', 'labels' or 'extended', got {mode}")
     
     aligned_timestamps_labels = aligned_timestamps_labels.rename(columns={'start':'timestamp'})
     
@@ -375,13 +409,17 @@ def align_notes_labels_audio(
             Defaults to False.
         evaluate: bool (optional)
             Prints DTW matching score. Defaults to False.
-        mode: str (optional)
-            Level of details the result should keep. 
-            Can take value between: ['compact', 'labels', 'extended']
-                Compact: only outputs labels aligned with timestamps
-                Labels details: outputs labels and additional label information aligned with timestamps
-                Extended: outputs merged notes and labels datasets with additional information, aligned with timestamps                
-            Defaults to 'compact'.
+        mode: str (default: 'compact')
+            compact:
+                - without labels: columns ["start", "end", "pitch"]
+                - with labels: columns ["timestamp", "label"]
+            extended:
+                - without labels: fully aligned original notes TSV
+                - with labels: fully aligned original notes TSV with original label columns merged
+            labels:
+                Original label columns preceded by columns ["timestamp", "duration_time", "end"].
+                Please note that the durations and end points to not currently reflect those of the
+                labels but those of one of the notes they co-occur with.
 
     Returns:
         result: DataFrame object
@@ -413,12 +451,10 @@ def align_notes_labels_audio(
     if labels_path:
         df_annotation_extended = align_corpus_notes_and_labels(notes_path, labels_path)
     else:
+        df_annotation_extended = None
         if mode == "labels":
             raise ValueError("When 'mode' is set to 'labels', labels_path must be provided")
-        if mode == "compact":
-            mode = "notes"
-        elif mode == "extended":
-            mode = "scofo"
+
     
     # Load audio
     audio, _ = librosa.load(audio_path, sr=Fs)
@@ -468,15 +504,24 @@ def align_notes_labels_audio(
     
     # Align time-aligned annotations of notes with labels
     result = df_annotation_warped
-    if mode in ['compact', 'labels', 'extended']:
+    if df_annotation_extended is not None:
         result = align_warped_notes_labels(df_annotation_warped, df_annotation_extended, mode)
-    elif mode == 'notes':
+    elif mode == 'compact':
         result = result[['start', 'end', 'pitch']]
-    elif mode == 'scofo':
+    elif mode == 'extended':
         # Return notes and their temporal positions, and additional information from the notes dataset
         notes_df = pd.read_csv(notes_path, sep='\t', dtype="string") # loading as nullable strings to not change any data
+
+        if "start" in notes_df.columns:
+            warnings.warn(
+                f"The notes TSV already came with a 'start' column, so the result has two of them. If you want to add "
+                f"alignments for several recordings to the same note tables, it is a good idea to rename the columns "
+                f"accordingly."
+            )
         assert notes_df.midi.equals(df_annotation_warped.pitch.astype("string")), "MIDI values do not match"
         result = pd.concat([notes_df, df_annotation_warped[['start', 'end']]], axis=1)
+    else:
+        raise ValueError(f"'mode' parameter should bei either 'compact', 'labels' or 'extended', got {mode}")
 
     
     # Store
