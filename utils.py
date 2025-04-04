@@ -53,6 +53,16 @@ def to_end(start, duration):
     """
     return start + duration
 
+
+def get_quarterbeats_column_name(notes_df: pd.DataFrame) -> str:
+    if "quarterbeats_playthrough" in notes_df.columns:
+        qb_column = "quarterbeats_playthrough"
+    elif "quarterbeats" in notes_df.columns:
+        qb_column = "quarterbeats"
+    else:
+        raise ValueError("The notes file must contain either 'quarterbeats' or 'quarterbeats_playthrough' column")
+    return qb_column
+
 def corpus_to_df_musical_time(notes_path):
     """
     Converts notes TSV file as in DCML mozart-sonatas corpus [1] to a dataframe used for warping path synchronization
@@ -72,8 +82,9 @@ def corpus_to_df_musical_time(notes_path):
     notes_df = ms3.load_tsv(notes_path) 
     
     # Select and rename columns of interest
-    df_annotation = notes_df[['quarterbeats', 'duration_qb', 'midi']].rename(
-        columns={'quarterbeats':'start', 'duration_qb':'duration', 'midi': 'pitch'})
+    qb_column = get_quarterbeats_column_name(notes_df)
+    df_annotation = notes_df[[qb_column, 'duration_qb', 'midi']].rename(
+        columns={qb_column:'start', 'duration_qb':'duration', 'midi': 'pitch'})
     
     # Create "start" column
     df_annotation['start'] = df_annotation['start'].apply(lambda x: to_start(x))
@@ -112,11 +123,19 @@ def align_corpus_notes_and_labels(notes_path, labels_path):
     """
     notes_qb = ms3.load_tsv(notes_path)
     labels_qb = ms3.load_tsv(labels_path)
-    
+    notes_qb_column = get_quarterbeats_column_name(notes_qb)
+    labels_qb_column = get_quarterbeats_column_name(labels_qb)
+    if notes_qb_column != labels_qb_column:
+        raise ValueError(
+f"""It looks like between notes and labels, one of them is unfolded while the other isn't:
+Notes: {notes_qb_column!r}
+Labels: {labels_qb_column!r}"""
+        )
+
     notes_extended = pd.merge(notes_qb, labels_qb.drop(columns=
                                                         ['duration_qb', 'mc', 'mn', 'mc_onset',
                                                         'mn_onset', 'timesig', 'staff', 'voice']), 
-                                left_on=['quarterbeats'], right_on=['quarterbeats'], how='outer')
+                                left_on=[notes_qb_column], right_on=[notes_qb_column], how='outer')
     
     return notes_extended
 
@@ -317,12 +336,19 @@ def evaluate_matching(df_original_notes, df_warped_notes, verbose=True):
         print("Number of unmachted notes: {:}".format(diff_matched_notes))
 
     return matching_score
-    
 
 
-def align_notes_labels_audio(notes_path, labels_path, audio_path,
-                             store=True, store_path=os.path.join(os.getcwd(), 'alignment_results', 'result.csv'),
-                             verbose=False, visualize=False, evaluate=False, mode='compact'):
+def align_notes_labels_audio(
+        audio_path,
+        notes_path,
+        labels_path=None,
+        store=True,
+        store_path=None,
+        verbose=False,
+        visualize=False,
+        evaluate=False,
+        mode='compact'
+        ):
     """This function performs the whole pipeline of aligning an audio recording of a piece and its
     corresponding labels annotations from DCML's Mozart sonatas corpus [1], using synctoolbox dynamic
     time warping (DTW) tools [2]. It takes as input the paths to the audio file, to the labels TSV file
@@ -345,7 +371,7 @@ def align_notes_labels_audio(notes_path, labels_path, audio_path,
         store: bool (optional)
             Stores the alignment result. Defaults to False.
         store_path: str (optional)
-            If store is set to True, path to store the result in. Defaults to "alignment_results/result.csv".
+            If store is set to True, path to store the result in. Defaults to current working directory.
         verbose: bool (optional)
             Prints information. Defaults to False.
         visualize: bool (optional)
@@ -379,14 +405,27 @@ def align_notes_labels_audio(notes_path, labels_path, audio_path,
         [https://github.com/meinardmueller/synctoolbox]
     
     """
-    
+    if store_path is None:
+        store_path = os.getcwd()
+    if os.path.isdir(store_path):
+        audio_fname, _ = os.path.splitext(os.path.basename(audio_path))
+        result_fname = audio_fname + '_aligned.csv'
+        store_path = os.path.join(store_path, result_fname)
     # Prepare annotation format
     df_annotation = corpus_to_df_musical_time(notes_path)
     # Keep track of notes annotations and labels correspondances
-    df_annotation_extended = align_corpus_notes_and_labels(notes_path, labels_path)
+    if labels_path:
+        df_annotation_extended = align_corpus_notes_and_labels(notes_path, labels_path)
+    else:
+        if mode == "labels":
+            raise ValueError("When 'mode' is set to 'labels', labels_path must be provided")
+        if mode == "compact":
+            mode = "notes"
+        elif mode == "extended":
+            mode = "scofo"
     
     # Load audio
-    audio, _ = librosa.load(audio_path, Fs)
+    audio, _ = librosa.load(audio_path, sr=Fs)
 
     # Estimate tuning deviation
     tuning_offset = estimate_tuning(audio, Fs)
@@ -409,7 +448,7 @@ def align_notes_labels_audio(notes_path, labels_path, audio_path,
 
     # Apply potential shift to audio and annotations features
     f_chroma_quantized_annotation = shift_chroma_vectors(f_chroma_quantized_annotation, opt_chroma_shift)
-    f_DLNCO_annotation = shift_chroma_vectors(f_DLNCO_annotation, opt_chroma_shift)
+    # f_DLNCO_annotation = shift_chroma_vectors(f_DLNCO_annotation, opt_chroma_shift)
     
     # Compute warping path
     wp = sync_via_mrmsdtw(f_chroma1=f_chroma_quantized_audio, 
@@ -436,16 +475,18 @@ def align_notes_labels_audio(notes_path, labels_path, audio_path,
     if mode in ['compact', 'labels', 'extended']:
         result = align_warped_notes_labels(df_annotation_warped, df_annotation_extended, mode)
     elif mode == 'notes':
-        result == result[['start', 'end', 'pitch']]
+        result = result[['start', 'end', 'pitch']]
     elif mode == 'scofo':
         # Return notes and their temporal positions, and additional information from the notes dataset
-        notes_df = ms3.load_tsv(notes_path) 
-        result = pd.merge(df_annotation_warped[['start', 'end', 'pitch']], notes_df,
-                 left_on='pitch' , right_on='midi').drop('midi', axis=1)
+        notes_df = pd.read_csv(notes_path, sep='\t', dtype="string") # loading as nullable strings to not change any data
+        assert notes_df.midi.equals(df_annotation_warped.pitch.astype("string")), "MIDI values do not match"
+        result = pd.concat([notes_df, df_annotation_warped[['start', 'end']]], axis=1)
 
     
     # Store
     if store:
-        result.to_csv(store_path, index = False)
+        csv_args = dict(sep="\t") if store_path.endswith(".tsv") else {}
+        result.to_csv(store_path, index = False, **csv_args)
+        print(f"\nStored results to", store_path)
     
     return result
