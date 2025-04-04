@@ -1,31 +1,27 @@
 ###################################################################
 
 """ This module contains the main audio-to-annotations functionality and helper functions."""
+import os
+from typing import Optional, Literal
 
-############################# IMPORTS #############################
-
-from libfmp.b import list_to_pitch_activations, plot_chromagram, plot_signal, plot_matrix, \
-                     sonify_pitch_activations_with_signal
 import librosa.display
+import ms3
 import numpy as np
 import pandas as pd
 import scipy.interpolate
-
-#import sys
-#sys.path.insert(0, '../sync_toolbox/synctoolbox/')
+from libfmp.b import plot_chromagram
+# import sys
+# sys.path.insert(0, '../sync_toolbox/synctoolbox/')
 from synctoolbox.dtw.mrmsdtw import sync_via_mrmsdtw
 from synctoolbox.dtw.utils import compute_optimal_chroma_shift, shift_chroma_vectors, make_path_strictly_monotonic
-from synctoolbox.feature.csv_tools import read_csv_to_df, df_to_pitch_features, df_to_pitch_onset_features
 from synctoolbox.feature.chroma import pitch_to_chroma, quantize_chroma, quantized_chroma_to_CENS
+from synctoolbox.feature.csv_tools import df_to_pitch_features, df_to_pitch_onset_features
 from synctoolbox.feature.dlnco import pitch_onset_features_to_DLNCO
 from synctoolbox.feature.pitch import audio_to_pitch_features
 from synctoolbox.feature.pitch_onset import audio_to_pitch_onset_features
 from synctoolbox.feature.utils import estimate_tuning
 
-import ms3
-import libfmp.c2
-import os
-
+############################# IMPORTS #############################
 
 
 ############################# GLOBALS #############################
@@ -339,15 +335,15 @@ def evaluate_matching(df_original_notes, df_warped_notes, verbose=True):
 
 
 def align_notes_labels_audio(
-        audio_path,
-        notes_path,
-        labels_path=None,
-        store=True,
-        store_path=None,
-        verbose=False,
-        visualize=False,
-        evaluate=False,
-        mode='compact'
+        audio_path: str,
+        notes_path: str,
+        labels_path: Optional[str] = None,
+        store: bool = True,
+        store_path: Optional[str] = None,
+        verbose: bool = False,
+        visualize: bool = False,
+        evaluate: bool = False,
+        mode: Literal['compact', 'labels', 'extended'] = 'compact'
         ):
     """This function performs the whole pipeline of aligning an audio recording of a piece and its
     corresponding labels annotations from DCML's Mozart sonatas corpus [1], using synctoolbox dynamic

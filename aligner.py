@@ -1,15 +1,41 @@
 # imports
-import os, argparse
+import argparse
+from typing import Optional, Literal
+
 from utils import align_notes_labels_audio
+
+
 # from ms3 import check_dir
 
 
+def main(
+        audio_path: str,
+        notes_path: str,
+        labels_path: Optional[str] = None,
+        store: bool = True,
+        store_path: Optional[str] = None,
+        verbose: bool = False,
+        visualize: bool = False,
+        evaluate: bool = False,
+        mode: Literal['compact', 'labels', 'extended'] = 'compact'
+):
+    align_notes_labels_audio(
+        audio_path=audio_path,
+        notes_path=notes_path,
+        labels_path=labels_path,
+        store=store,
+        store_path=store_path,
+        verbose=verbose,
+        visualize=visualize,
+        evaluate=evaluate,
+        mode=mode
+    )
 
-def main():
-    """ Audio-to-annotations aligner """
-    
+
+def parse_args():
     # define parser
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description="""
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter, description="""
     
     This script performs the alignment between an audio recording of a piece present in DCML Mozart sonatas 
     corpus [1], using synctoolbox dynamic time warping (DTW) tools [2]. 
@@ -41,34 +67,44 @@ def main():
         Journal of Open Source Software (JOSS), 6(64), 2021.
         [https://github.com/meinardmueller/synctoolbox]
         
-    """)
-    
+    """
+    )
     parser.add_argument('-a', '--audio', help='Path to audiofile', required=True)
-    #parser.add_argument('-p','--piece', help='Name of the desired piece from the Mozart corpus')
+    # parser.add_argument('-p','--piece', help='Name of the desired piece from the Mozart corpus')
     parser.add_argument('-n', '--notes', help='Path to the notes TSV file', required=True)
     parser.add_argument('-l', '--labels', help='Path to the labels TSV file', required=False)
-    #parser.add_argument('-o', '--output', type=check_dir, default=os.path.join(os.getcwd(), 'alignment'), help='Folder for storing the alignment result. Can be relative, defaults to ./alignment')
-    parser.add_argument('-o', '--output', help='Folder for storing the alignment result. Can be relative, defaults to current working directory.')
-    parser.add_argument('-m', '--mode', help="Output format mode, to choose between ['compact', 'labels', 'extended', 'scofo']. default: ", default='compact')
-    parser.add_argument('-e', '--evaluate', help="Evaluate warping mode. default: False", action='store_true', default=False)
-
-    
+    # parser.add_argument('-o', '--output', type=check_dir, default=os.path.join(os.getcwd(), 'alignment'),
+    # help='Folder for storing the alignment result. Can be relative, defaults to ./alignment')
+    parser.add_argument(
+        '-o', '--output',
+        help='Folder for storing the alignment result. Can be relative, defaults to current working directory.'
+    )
+    parser.add_argument(
+        '-m', '--mode',
+        help="Output format mode, to choose between ['compact', 'labels', 'extended', 'scofo']. default: ",
+        default='compact'
+    )
+    parser.add_argument(
+        '-e', '--evaluate', help="Evaluate warping mode. default: False", action='store_true', default=False
+    )
     args = parser.parse_args()
-    
-    output_dir = args.output
-    audio_path = args.audio
-    notes_path = args.notes
-    labels_path = args.labels
-    mode = args.mode
-    evaluate = args.evaluate
+    return args
 
-    align_notes_labels_audio(
-        audio_path, notes_path, labels_path, store=True, store_path=output_dir, verbose=False, visualize=False,
-        evaluate=evaluate, mode=mode
-        )
-    
 
-    
+def run():
+    """ Audio-to-annotations aligner """
+    args = parse_args()
+    main(
+        audio_path=args.audio,
+        notes_path=args.notes,
+        labels_path=args.labels,
+        store=True,
+        store_path=args.output,
+        verbose=False,
+        visualize=False,
+        evaluate=args.evaluate,
+        mode=args.mode
+    )
 
 if __name__ == '__main__':
-    main()
+    run()
