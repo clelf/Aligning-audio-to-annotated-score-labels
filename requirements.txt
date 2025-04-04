@@ -1,0 +1,4 @@
+# with Python==3.12 you will get ModuleNotFoundError: No module named 'music21.ext.six.moves';
+# for the purpose of this project, you can do pip install -U music21 and ignore the conflict with synctoolbox
+synctoolbox==1.3.2
+ms3==2.5.4

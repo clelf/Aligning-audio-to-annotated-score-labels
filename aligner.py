@@ -46,9 +46,9 @@ def main():
     parser.add_argument('-a', '--audio', help='Path to audiofile', required=True)
     #parser.add_argument('-p','--piece', help='Name of the desired piece from the Mozart corpus')
     parser.add_argument('-n', '--notes', help='Path to the notes TSV file', required=True)
-    parser.add_argument('-l', '--labels', help='Path to the labels TSV file', required=True)
+    parser.add_argument('-l', '--labels', help='Path to the labels TSV file', required=False)
     #parser.add_argument('-o', '--output', type=check_dir, default=os.path.join(os.getcwd(), 'alignment'), help='Folder for storing the alignment result. Can be relative, defaults to ./alignment')
-    parser.add_argument('-o', '--output', default=os.path.join(os.getcwd(), 'alignment_results', 'result.csv'), help='Folder for storing the alignment result. Can be relative, defaults to ./alignment_results')
+    parser.add_argument('-o', '--output', help='Folder for storing the alignment result. Can be relative, defaults to current working directory.')
     parser.add_argument('-m', '--mode', help="Output format mode, to choose between ['compact', 'labels', 'extended', 'scofo']. default: ", default='compact')
     parser.add_argument('-e', '--evaluate', help="Evaluate warping mode. default: False", action='store_true', default=False)
 
@@ -61,11 +61,11 @@ def main():
     labels_path = args.labels
     mode = args.mode
     evaluate = args.evaluate
-    
-    
-    align_notes_labels_audio(notes_path, labels_path, audio_path, 
-                             store=True, store_path=output_dir,
-                             verbose=False, visualize=False, evaluate=evaluate, mode=mode)
+
+    align_notes_labels_audio(
+        audio_path, notes_path, labels_path, store=True, store_path=output_dir, verbose=False, visualize=False,
+        evaluate=evaluate, mode=mode
+        )
     
 
     
